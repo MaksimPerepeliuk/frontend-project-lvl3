@@ -10,7 +10,7 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
   },
   devServer: {
-    static: './build',
+    static: './',
     port: 8080,
     open: true,
   },
