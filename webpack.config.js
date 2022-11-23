@@ -21,29 +21,57 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(png|jpe?g|gif)$/i,
+        test: /\.(sass|less|css)$/,
         use: [
           {
-            loader: 'file-loader',
+            loader: 'style-loader'
           },
-        ],
-      },
-      {
-        test: /\.css$/i,
-        use: ["style-loader", "css-loader"],
-      },
-      {
-        test: /\.m?js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              ['@babel/preset-env', { targets: "defaults" }]
-            ]
+          {
+            loader: 'css-loader'
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: () => [
+                  require('autoprefixer')
+                ]
+              }
+            }
+          },
+          {
+            loader: 'sass-loader'
           }
-        }
+        ]
       }
     ]
-  },
+  }
+  // module: {
+  //   rules: [
+  //     {
+  //       test: /\.(png|jpe?g|gif)$/i,
+  //       use: [
+  //         {
+  //           loader: 'file-loader',
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       test: /\.css$/i,
+  //       use: ["style-loader", "css-loader", 'postcss-loader', 'sass-loader'],
+  //     },
+  //     {
+  //       test: /\.m?js$/,
+  //       exclude: /node_modules/,
+  //       use: {
+  //         loader: 'babel-loader',
+  //         options: {
+  //           presets: [
+  //             ['@babel/preset-env', { targets: "defaults" }]
+  //           ]
+  //         }
+  //       }
+  //     }
+  //   ]
+  // },
 };
