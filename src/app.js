@@ -1,19 +1,17 @@
 import * as yup from "yup";
 import onChange from "on-change";
 
-const validate = (url, rssFormState) => {
+const validate = (url, rssFormState, cb) => {
   const schema = yup
     .string()
     .required()
     .url("Ссылка должна быть валидным URL")
     .notOneOf(rssFormState.urls, "RSS уже существует");
 
-  try {
-    schema.validateSync(url);
-    return null;
-  } catch (err) {
-    return err.message;
-  }
+  schema
+    .validate(url)
+    .then((result) => cb({ isError: false, result: url }))
+    .catch(({ message }) => cb({ isError: true, result: message }));
 };
 
 export default () => {
@@ -52,12 +50,17 @@ export default () => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const url = formData.get("url");
-    const error = validate(url, state.rssForm);
-    watchedState.rssForm.error = error;
-    watchedState.rssForm.isValid = !error;
+    const callbackValidate = ({ isError, result }) => {
+      if (isError) {
+        watchedState.rssForm.error = result;
+        watchedState.rssForm.isValid = false;
+      } else {
+        watchedState.rssForm.error = null;
+        watchedState.rssForm.isValid = true;
+        watchedState.rssForm.urls.push(url);
+      }
+    };
 
-    if (!error) {
-      watchedState.rssForm.urls.push(url);
-    }
+    validate(url, state.rssForm, callbackValidate);
   });
 };
