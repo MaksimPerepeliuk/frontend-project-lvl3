@@ -6,8 +6,8 @@ const validate = (url, rssFormState, cb) => {
   const schema = yup
     .string()
     .required()
-    .url("Ссылка должна быть валидным URL")
-    .notOneOf(rssFormState.urls, "RSS уже существует");
+    .url('rssForm.errors.urlNotValid')
+    .notOneOf(rssFormState.urls, 'rssForm.errors.urlExist');
 
   schema
     .validate(url)
