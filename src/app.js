@@ -1,18 +1,16 @@
 import * as yup from "yup";
 import onChange from "on-change";
 import render from "./view.js";
+import axios from "axios";
 
-const validate = (url, rssFormState, cb) => {
+const validate = (url, rssFormState) => {
   const schema = yup
     .string()
     .required()
-    .url('rssForm.errors.urlNotValid')
-    .notOneOf(rssFormState.urls, 'rssForm.errors.urlExist');
+    .url("rssForm.errors.urlNotValid")
+    .notOneOf(rssFormState.urls, "rssForm.errors.urlExist");
 
-  schema
-    .validate(url)
-    .then((result) => cb({ isError: false, result: url }))
-    .catch(({ message }) => cb({ isError: true, result: message }));
+  return schema.validate(url);
 };
 
 export default () => {
@@ -20,7 +18,7 @@ export default () => {
     rssForm: {
       isValid: null,
       error: null,
-      urls: ["https://ru.hexlet.io/lessons.rss"],
+      urls: [],
     },
   };
 
@@ -34,17 +32,16 @@ export default () => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const url = formData.get("url");
-    const callbackValidate = ({ isError, result }) => {
-      if (isError) {
-        watchedState.rssForm.error = result;
-        watchedState.rssForm.isValid = false;
-      } else {
+
+    validate(url, state.rssForm)
+      .then(() => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.isValid = true;
         watchedState.rssForm.urls.push(url);
-      }
-    };
-
-    validate(url, state.rssForm, callbackValidate);
+      })
+      .catch((err) => {
+        watchedState.rssForm.error = err.message;
+        watchedState.rssForm.isValid = false;
+      });
   });
 };
