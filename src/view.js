@@ -1,8 +1,8 @@
 import t from './ru.js';
 
-export default ({ form, input, feedback }) =>
+export const rssFormRender = ({ form, input, feedback }) =>
   (path, value, previousValue) => {
-    if (path === "rssForm.error") {
+    if (path === "error") {
       if (value) {
         input.classList.add("is-invalid");
         feedback.classList.remove("text-success");
