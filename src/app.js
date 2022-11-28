@@ -1,6 +1,6 @@
 import * as yup from "yup";
 import onChange from "on-change";
-import { rssFormRender } from "./view.js";
+import { rssFormRender, rssItemsRender } from "./view.js";
 import axios from "axios";
 
 const validate = (url, rssUrls) => {
@@ -30,7 +30,7 @@ const getItems = (html) => {
     });
   });
 
-  return { feeds, posts };
+  return [feeds, posts];
 };
 
 export default () => {
@@ -54,7 +54,14 @@ export default () => {
     state.rssForm,
     rssFormRender({ form, input, feedback })
   );
-  // const watchedRssItemsState = onChange(state.Items, rssItemsRender({ form, input, feedback }));
+
+  const feedContainer = document.querySelector(".feeds");
+  const postContainer = document.querySelector(".posts");
+
+  const watchedRssItemsState = onChange(
+    state.rssItems,
+    rssItemsRender({ feedContainer, postContainer })
+  );
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -70,6 +77,7 @@ export default () => {
       .catch((err) => {
         watchedRssFormState.error = err.message;
         watchedRssFormState.isValid = false;
+        return Promise.reject();
       })
       .then(() => {
         const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
@@ -81,8 +89,9 @@ export default () => {
           response.data.contents,
           "text/xml"
         );
-        const rssItems = getItems(htmlDocument);
-        console.log(rssItems);
+        const [ feeds, posts ] = getItems(htmlDocument);
+        watchedRssItemsState.feeds = feeds;
+        watchedRssItemsState.posts = posts;
       })
       .catch((err) => console.log(err));
   });
