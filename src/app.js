@@ -1,6 +1,6 @@
 import * as yup from "yup";
 import onChange from "on-change";
-import { rssFormRender, rssItemsRender } from "./view.js";
+import render from "./view.js";
 import axios from "axios";
 
 const validate = (url, rssUrls) => {
@@ -25,8 +25,8 @@ const getItems = (html) => {
     items.forEach((item) => {
       const title = item.querySelector("title").textContent;
       const describe = item.querySelector("description").textContent;
-      const link = item.querySelector("link").textContent;
-      posts.push({ feedId: id, title, describe, link });
+      const url = item.querySelector("link").textContent;
+      posts.push({ feedId: id, title, describe, url });
     });
   });
 
@@ -35,49 +35,40 @@ const getItems = (html) => {
 
 export default () => {
   const state = {
-    rssForm: {
-      isValid: null,
+    rssFeeds: {
+      state: "filling", // processing, finished, failed
       error: null,
       urls: [],
-    },
-    rssItems: {
-      feeds: [],
-      posts: [],
+      data: {
+        feeds: [],
+        posts: [],
+      },
     },
   };
 
-  const form = document.querySelector("form");
-  const input = document.querySelector("#url-input");
-  const feedback = document.querySelector(".feedback");
+  const elements = {
+    form: document.querySelector("form"),
+    input: document.querySelector("#url-input"),
+    submitButton: document.querySelector(".btn"),
+    feedback: document.querySelector(".feedback"),
+    feedContainer: document.querySelector(".feeds"),
+    postContainer: document.querySelector(".posts"),
+  };
 
-  const watchedRssFormState = onChange(
-    state.rssForm,
-    rssFormRender({ form, input, feedback })
-  );
+  const watchedState = onChange(state.rssFeeds, render(elements));
 
-  const feedContainer = document.querySelector(".feeds");
-  const postContainer = document.querySelector(".posts");
-
-  const watchedRssItemsState = onChange(
-    state.rssItems,
-    rssItemsRender({ feedContainer, postContainer })
-  );
-
-  form.addEventListener("submit", (event) => {
+  elements.form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const url = formData.get("url");
 
-    validate(url, state.rssForm.urls)
+    validate(url, state.rssFeeds.urls)
       .then(() => {
-        watchedRssFormState.error = false;
-        watchedRssFormState.isValid = true;
-        watchedRssFormState.urls.push(url);
+        watchedState.state = "processing";
       })
       .catch((err) => {
-        watchedRssFormState.error = err.message;
-        watchedRssFormState.isValid = false;
-        return Promise.reject();
+        watchedState.state = "failed";
+        throw new Error(err.message);
       })
       .then(() => {
         const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
@@ -89,10 +80,19 @@ export default () => {
           response.data.contents,
           "text/xml"
         );
-        const [ feeds, posts ] = getItems(htmlDocument);
-        watchedRssItemsState.feeds = feeds;
-        watchedRssItemsState.posts = posts;
+        const isParserError = htmlDocument.querySelector('parsererror');
+        if (isParserError) {
+          throw new Error('rssForm.errors.rssNotValid');
+        }
+        const [feeds, posts] = getItems(htmlDocument);
+        watchedState.data.feeds = [...watchedState.data.feeds, ...feeds];
+        watchedState.data.posts = [...watchedState.data.posts, ...posts];
+        watchedState.urls.push(url);
+        watchedState.state = 'finished';
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        watchedState.state = "failed";
+        watchedState.error = err.message;
+      });
   });
 };
