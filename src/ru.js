@@ -11,6 +11,7 @@ i18next.init({
           errors: {
             urlNotValid: "Ссылка должна быть валидным URL",
             urlExist: "RSS уже существует",
+            rssNotValid: "Ресурс не содержит валидный RSS",
           },
         },
       },
