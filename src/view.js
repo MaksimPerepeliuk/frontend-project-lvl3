@@ -1,57 +1,136 @@
 import t from "./ru.js";
 
-export const rssFormRender = ({ form, input, feedback }) => {
-  return (path, value) => {
-    if (path === "error") {
-      if (value) {
-        input.classList.add("is-invalid");
-        feedback.classList.remove("text-success");
-        feedback.classList.add("text-danger");
-        feedback.textContent = t(value);
-      } else {
-        input.classList.remove("is-invalid");
-        feedback.classList.remove("text-danger");
-        feedback.classList.add("text-success");
-        feedback.textContent = t("rssForm.success");
-        form.reset();
-        input.focus();
-      }
-    }
-  };
+const handleProcessState = (processState, elements) => {
+  switch (processState) {
+    case "processing":
+      elements.submitButton.disabled = true;
+      break;
+
+    case "failed":
+      elements.submitButton.disabled = false;
+      break;
+
+    case "finished":
+      elements.input.classList.remove("is-invalid");
+      elements.feedback.classList.remove("text-danger");
+      elements.feedback.classList.add("text-success");
+      elements.feedback.textContent = t("rssForm.success");
+      elements.form.reset();
+      elements.input.focus();
+      elements.submitButton.disabled = false;
+      break;
+
+    case "filling":
+      elements.submitButton.disabled = false;
+      break;
+
+    default:
+      throw new Error(`Unknown process state: ${processState}`);
+  }
 };
 
-export const rssItemsRender = ({ feedContainer, postContainer }) => {
-  return (path, value, prevValue) => {
-    console.log(path, value, prevValue);
-    if (path === "feeds") {
-      const card = document.createElement("div");
-      card.classList.add("card", "border-0");
-      const cardBody = document.createElement("div");
-      cardBody.classList.add("card-body");
-      const cardTitle = document.createElement("h2");
-      cardTitle.classList.add("card-title", "h4");
-      cardTitle.textContent = "Фиды";
-      cardBody.append(cardTitle);
-      card.append(cardBody);
-      const feedList = document.createElement('ul');
-      feedList.classList.add('list-group', 'border-0', 'rounded-0');
-      feedContainer.append(card);
-      // вынести в функцию
-      const feedItems = value.map(({ title, describe }) => {
-        const li = document.createElement("li");
-        li.classList.add('list-group-item', 'border-0', 'rounded-0');
-        const itemTitle = document.createElement('h3');
-        itemTitle.classList.add('h6', 'm-0');
-        itemTitle.textContent = title;
-        const itemDescribe = document.createElement('p');
-        itemDescribe.classList.add('m-0', 'small', 'text-black-50');
-        itemDescribe.textContent = describe;
-        li.append(itemTitle);
-        li.append(itemDescribe);
-        return li;
-      });
-      feedList.append(...feedItems);
-      feedContainer.append(feedList);
+const renderError = (value, elements) => {
+  elements.input.classList.add("is-invalid");
+  elements.feedback.classList.remove("text-success");
+  elements.feedback.classList.add("text-danger");
+  elements.feedback.textContent = t(value);
+};
+
+const createSection = (titleText) => {
+  const card = document.createElement("div");
+  card.classList.add("card", "border-0");
+  const cardBody = document.createElement("div");
+  cardBody.classList.add("card-body");
+  const cardTitle = document.createElement("h2");
+  cardTitle.classList.add("card-title", "h4");
+  cardTitle.textContent = titleText;
+  cardBody.append(cardTitle);
+  card.append(cardBody);
+  const feedList = document.createElement("ul");
+  feedList.classList.add("list-group", "border-0", "rounded-0");
+  return [card, feedList];
+};
+
+const postsRender = (posts, elements) => {
+  const [card, postList] = createSection("Посты");
+  elements.postContainer.replaceChildren(card);
+  const postItems = posts.map(({ title, description, url }) => {
+    const li = document.createElement("li");
+    li.classList.add(
+      "list-group-item",
+      "d-flex",
+      "justify-content-between",
+      "align-items-start",
+      "border-0",
+      "border-end-0"
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.classList.add("fw-bold");
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = title;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("btn", "btn-outline-primary", "btn-sm");
+    button.dataset.id = 1; // почему не подсвчиавет????
+    button.dataset.bsToggle = "modal";
+    button.dataset.bsTarget = "#modal";
+    button.textContent = 'Просмотр'; /// вынести в i18n
+    li.append(link);
+    li.append(button);
+    return li;
+  });
+
+  postList.append(...postItems);
+  elements.postContainer.append(postList);
+};
+
+const feedsRender = (feeds, elements) => {
+  const [card, feedList] = createSection("Фиды");
+  elements.feedContainer.replaceChildren(card);
+  const feedItems = feeds.map(({ title, description }) => {
+    const li = document.createElement("li");
+    li.classList.add("list-group-item", "border-0", "rounded-0");
+    const itemTitle = document.createElement("h3");
+    itemTitle.classList.add("h6", "m-0");
+    itemTitle.textContent = title;
+    const itemDescription = document.createElement("p");
+    itemDescription.classList.add("m-0", "small", "text-black-50");
+    itemDescription.textContent = description;
+    li.append(itemTitle);
+    li.append(itemDescription);
+    return li;
+  });
+
+  feedList.append(...feedItems);
+  elements.feedContainer.append(feedList);
+};
+
+export default (elements) => {
+  const inner = (path, value, previousValue) => {
+    console.log(path, value, previousValue);
+    switch (path) {
+      case "state":
+        handleProcessState(value, elements);
+        break;
+
+      case "error":
+        renderError(value, elements);
+        break;
+
+      case "data.feeds":
+        feedsRender(value, elements);
+        break;
+
+      case "data.posts":
+        postsRender(value, elements);
+        break;
+
+      default:
+        break;
     }
   };
+
+  return inner;
 };
