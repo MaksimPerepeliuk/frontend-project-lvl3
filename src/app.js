@@ -19,14 +19,14 @@ const getItems = (html) => {
   const posts = [];
   channels.forEach((channel, id) => {
     const title = channel.querySelector("title").textContent;
-    const describe = channel.querySelector("description").textContent;
-    feeds.push({ id, title, describe });
+    const description = channel.querySelector("description").textContent;
+    feeds.push({ id, title, description });
     const items = channel.querySelectorAll("item");
     items.forEach((item) => {
       const title = item.querySelector("title").textContent;
-      const describe = item.querySelector("description").textContent;
+      const description = item.querySelector("description").textContent;
       const url = item.querySelector("link").textContent;
-      posts.push({ feedId: id, title, describe, url });
+      posts.push({ feedId: id, title, description, url });
     });
   });
 
@@ -85,8 +85,8 @@ export default () => {
           throw new Error('rssForm.errors.rssNotValid');
         }
         const [feeds, posts] = getItems(htmlDocument);
-        watchedState.data.feeds = [...watchedState.data.feeds, ...feeds];
-        watchedState.data.posts = [...watchedState.data.posts, ...posts];
+        watchedState.data.feeds = [...feeds, ...watchedState.data.feeds];
+        watchedState.data.posts = [...posts, ...watchedState.data.posts];
         watchedState.urls.push(url);
         watchedState.state = 'finished';
       })
