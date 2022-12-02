@@ -52,7 +52,7 @@ const createSection = (titleText) => {
 };
 
 const postsRender = (posts, elements) => {
-  const [card, postList] = createSection("Посты");
+  const [card, postList] = createSection(t("rssFeeds.posts"));
   elements.postContainer.replaceChildren(card);
   const postItems = posts.map(({ title, description, url }) => {
     const li = document.createElement("li");
@@ -73,10 +73,15 @@ const postsRender = (posts, elements) => {
     const button = document.createElement("button");
     button.type = "button";
     button.classList.add("btn", "btn-outline-primary", "btn-sm");
-    button.dataset.id = 1; // почему не подсвчиавет????
+    button.dataset.id = 1;
     button.dataset.bsToggle = "modal";
     button.dataset.bsTarget = "#modal";
-    button.textContent = 'Просмотр'; /// вынести в i18n
+    button.textContent = t("rssFeeds.modalOpenBtn");
+    button.addEventListener("click", (event) => {
+      const {modalTitle, modalBody} = elements.modalElements;
+      modalTitle.textContent = title;
+      modalBody.textContent = description;
+    });
     li.append(link);
     li.append(button);
     return li;
@@ -109,7 +114,6 @@ const feedsRender = (feeds, elements) => {
 
 export default (elements) => {
   const inner = (path, value, previousValue) => {
-    console.log(path, value, previousValue);
     switch (path) {
       case "state":
         handleProcessState(value, elements);
