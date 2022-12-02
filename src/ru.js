@@ -14,6 +14,10 @@ i18next.init({
             rssNotValid: "Ресурс не содержит валидный RSS",
           },
         },
+        rssFeeds: {
+          posts: 'Посты',
+          modalOpenBtn: 'Просмотр',
+        },
       },
     },
   },
