@@ -86,10 +86,14 @@ export default () => {
   const elements = {
     form: document.querySelector("form"),
     input: document.querySelector("#url-input"),
-    submitButton: document.querySelector(".btn"),
+    submitButton: document.querySelector(".rss-form .btn"),
     feedback: document.querySelector(".feedback"),
     feedContainer: document.querySelector(".feeds"),
     postContainer: document.querySelector(".posts"),
+    modalElements: {
+      modalTitle: document.querySelector('.modal-title'),
+      modalBody: document.querySelector('.modal-body'),
+    },
   };
 
   const watchedState = onChange(state.rssFeeds, render(elements));
