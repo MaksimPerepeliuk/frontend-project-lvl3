@@ -71,11 +71,13 @@ const updateRssItems = (url, watchedState, interval = 5000) => {
       );
       watchedState.data.feeds = [...newFeeds, ...watchedState.data.feeds];
       watchedState.data.posts = [...newPosts, ...watchedState.data.posts];
+      setTimeout(() => updateRssItems(url, watchedState, interval), interval);
+    })
+    .catch((err) => {
       if (!watchedState.urls.includes(url)) {
-        watchedState.urls.push(url);
-        if (watchedState.state === 'processing') {
-          watchedState.state = 'finished';
-        }
+        watchedState.state = 'failed';
+        watchedState.error = err.message;
+        throw err;
       }
       setTimeout(() => updateRssItems(url, watchedState, interval), interval);
     });
@@ -112,6 +114,7 @@ export default () => {
 
   elements.form.addEventListener('submit', (event) => {
     event.preventDefault();
+
     const formData = new FormData(event.target);
     const url = formData.get('url');
     validate(url, state.rssFeeds.urls)
@@ -123,6 +126,10 @@ export default () => {
         throw new Error(err.message);
       })
       .then(() => updateRssItems(url, watchedState))
+      .then(() => {
+        watchedState.urls.push(url);
+        watchedState.state = 'finished';
+      })
       .catch((err) => {
         watchedState.state = 'failed';
         watchedState.error = err.message;
