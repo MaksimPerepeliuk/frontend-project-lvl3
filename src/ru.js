@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 
-i18next.init({
+const i18nextInstance = i18next.createInstance();
+i18nextInstance.init({
   lng: 'ru',
   debug: true,
   resources: {
@@ -24,4 +25,4 @@ i18next.init({
   },
 });
 
-export default i18next.t;
+export default i18nextInstance.t;
