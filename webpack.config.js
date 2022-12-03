@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const autoprefixer = require('autoprefixer');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
@@ -15,8 +16,8 @@ module.exports = {
     open: true,
   },
   plugins: [
-    new HtmlWebpackPlugin({template: './index.html'}),
-    new CleanWebpackPlugin()
+    new HtmlWebpackPlugin({ template: './index.html' }),
+    new CleanWebpackPlugin(),
   ],
   module: {
     rules: [
@@ -24,54 +25,26 @@ module.exports = {
         test: /\.(sass|less|css)$/,
         use: [
           {
-            loader: 'style-loader'
+            loader: 'style-loader',
           },
           {
-            loader: 'css-loader'
+            loader: 'css-loader',
           },
           {
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
                 plugins: () => [
-                  require('autoprefixer')
-                ]
-              }
-            }
+                  autoprefixer,
+                ],
+              },
+            },
           },
           {
-            loader: 'sass-loader'
-          }
-        ]
-      }
-    ]
-  }
-  // module: {
-  //   rules: [
-  //     {
-  //       test: /\.(png|jpe?g|gif)$/i,
-  //       use: [
-  //         {
-  //           loader: 'file-loader',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       test: /\.css$/i,
-  //       use: ["style-loader", "css-loader", 'postcss-loader', 'sass-loader'],
-  //     },
-  //     {
-  //       test: /\.m?js$/,
-  //       exclude: /node_modules/,
-  //       use: {
-  //         loader: 'babel-loader',
-  //         options: {
-  //           presets: [
-  //             ['@babel/preset-env', { targets: "defaults" }]
-  //           ]
-  //         }
-  //       }
-  //     }
-  //   ]
-  // },
+            loader: 'sass-loader',
+          },
+        ],
+      },
+    ],
+  },
 };

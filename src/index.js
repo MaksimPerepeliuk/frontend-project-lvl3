@@ -1,5 +1,5 @@
 import '../index.css';
-import * as bootstrap from 'bootstrap';
-import app from './app.js';
+import 'bootstrap';
+import app from './app';
 
 app();
