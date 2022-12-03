@@ -82,6 +82,8 @@ const postsRender = (posts, elements) => {
       modalTitle.textContent = title;
       modalBody.textContent = description;
       modalReadAll.href = url;
+      link.classList.remove('fw-bold');
+      link.classList.add('fw-normal');
     });
     li.append(link);
     li.append(button);
