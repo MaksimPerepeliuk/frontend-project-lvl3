@@ -51,10 +51,10 @@ const createSection = (titleText) => {
   return [card, feedList];
 };
 
-const postsRender = (posts, elements) => {
+const postsRender = (posts, elements, uiState) => {
   const [card, postList] = createSection(t('rssFeeds.posts'));
   elements.postContainer.replaceChildren(card);
-  const postItems = posts.map(({ title, description, url }) => {
+  const postItems = posts.map(({ id, title, url }) => {
     const li = document.createElement('li');
     li.classList.add(
       'list-group-item',
@@ -66,25 +66,17 @@ const postsRender = (posts, elements) => {
     );
     const link = document.createElement('a');
     link.href = url;
-    link.classList.add('fw-bold');
+    link.classList.add(uiState.readedPosts.includes(id) ? 'fw-normal' : 'fw-bold');
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = title;
     const button = document.createElement('button');
     button.type = 'button';
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-    button.dataset.id = 1;
+    button.dataset.id = id;
     button.dataset.bsToggle = 'modal';
     button.dataset.bsTarget = '#modal';
     button.textContent = t('rssFeeds.modalOpenBtn');
-    button.addEventListener('click', () => {
-      const { modalTitle, modalBody, modalReadAll } = elements.modalElements;
-      modalTitle.textContent = title;
-      modalBody.textContent = description;
-      modalReadAll.href = url;
-      link.classList.remove('fw-bold');
-      link.classList.add('fw-normal');
-    });
     li.append(link);
     li.append(button);
     return li;
@@ -115,7 +107,27 @@ const feedsRender = (feeds, elements) => {
   elements.feedContainer.append(feedList);
 };
 
-export default (elements) => {
+const uiStateRender = (value, state) => {
+  const modal = document.querySelector('.modal');
+  const modalTitle = modal.querySelector('.modal-title');
+  const modalBody = modal.querySelector('.modal-body');
+  const modalFullArticleBtn = modal.querySelector('.full-article');
+  const readedPosts = state.data.posts.filter(({ id }) => value.includes(id));
+  readedPosts.forEach((post) => {
+    const {
+      id, title, description, url,
+    } = post;
+    const button = document.querySelector(`[data-id="${id}"]`);
+    const postLink = button.previousElementSibling;
+    modalTitle.textContent = title;
+    modalBody.textContent = description;
+    modalFullArticleBtn.href = url;
+    postLink.classList.remove('fw-bold');
+    postLink.classList.add('fw-normal');
+  });
+};
+
+export default (elements, state) => {
   const inner = (path, value) => {
     switch (path) {
       case 'state':
@@ -131,7 +143,11 @@ export default (elements) => {
         break;
 
       case 'data.posts':
-        postsRender(value, elements);
+        postsRender(value, elements, state.rssFeeds.uiState);
+        break;
+
+      case 'uiState.readedPosts':
+        uiStateRender(value, state.rssFeeds);
         break;
 
       default:

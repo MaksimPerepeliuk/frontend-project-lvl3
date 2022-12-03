@@ -69,8 +69,16 @@ const updateRssItems = (url, watchedState, interval = 5000) => {
       const newPosts = rssItems.posts.filter(
         ({ title }) => !postTitles.includes(title),
       );
-      watchedState.data.feeds = [...newFeeds, ...watchedState.data.feeds];
-      watchedState.data.posts = [...newPosts, ...watchedState.data.posts];
+      if (newPosts.length > 0) {
+        watchedState.data.feeds = [...newFeeds, ...watchedState.data.feeds];
+        watchedState.data.posts = [...newPosts, ...watchedState.data.posts];
+        const modalButtons = document.querySelectorAll('[data-bs-target="#modal"]');
+        modalButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            watchedState.uiState.readedPosts.push(button.dataset.id);
+          });
+        });
+      }
       setTimeout(() => updateRssItems(url, watchedState, interval), interval);
     })
     .catch((err) => {
@@ -93,6 +101,9 @@ export default () => {
         feeds: [],
         posts: [],
       },
+      uiState: {
+        readedPosts: [],
+      },
     },
   };
 
@@ -110,7 +121,7 @@ export default () => {
     },
   };
 
-  const watchedState = onChange(state.rssFeeds, render(elements));
+  const watchedState = onChange(state.rssFeeds, render(elements, state));
 
   elements.form.addEventListener('submit', (event) => {
     event.preventDefault();
