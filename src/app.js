@@ -104,6 +104,7 @@ export default () => {
     modalElements: {
       modalTitle: document.querySelector('.modal-title'),
       modalBody: document.querySelector('.modal-body'),
+      modalReadAll: document.querySelector('.full-article'),
     },
   };
 

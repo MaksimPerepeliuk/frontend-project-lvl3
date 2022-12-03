@@ -78,9 +78,10 @@ const postsRender = (posts, elements) => {
     button.dataset.bsTarget = '#modal';
     button.textContent = t('rssFeeds.modalOpenBtn');
     button.addEventListener('click', () => {
-      const { modalTitle, modalBody } = elements.modalElements;
+      const { modalTitle, modalBody, modalReadAll } = elements.modalElements;
       modalTitle.textContent = title;
       modalBody.textContent = description;
+      modalReadAll.href = url;
     });
     li.append(link);
     li.append(button);
