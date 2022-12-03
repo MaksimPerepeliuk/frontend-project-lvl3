@@ -40,7 +40,9 @@ const updateRssItems = (url, watchedState, interval = 5000) => {
   const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
   return axios
     .get(proxyUrl)
-    .catch((err) => console.log(err))
+    .catch((err) => {
+      throw new Error("rssForm.errors.networkErr");
+    })
     .then((response) => {
       const domParser = new DOMParser();
       const htmlDocument = domParser.parseFromString(
@@ -64,9 +66,11 @@ const updateRssItems = (url, watchedState, interval = 5000) => {
       watchedState.data.posts = [...newPosts, ...watchedState.data.posts];
       if (!watchedState.urls.includes(url)) {
         watchedState.urls.push(url);
+        if (watchedState.state === "processing") {
+          watchedState.state = "finished";
+        }
       }
-      watchedState.state = "finished";
-      setTimeout(updateRssItems, interval, url, watchedState, interval);
+      setTimeout(() => updateRssItems(url, watchedState, interval), interval);
     });
 };
 
@@ -91,8 +95,8 @@ export default () => {
     feedContainer: document.querySelector(".feeds"),
     postContainer: document.querySelector(".posts"),
     modalElements: {
-      modalTitle: document.querySelector('.modal-title'),
-      modalBody: document.querySelector('.modal-body'),
+      modalTitle: document.querySelector(".modal-title"),
+      modalBody: document.querySelector(".modal-body"),
     },
   };
 
