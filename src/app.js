@@ -114,11 +114,6 @@ export default () => {
     feedback: document.querySelector('.feedback'),
     feedContainer: document.querySelector('.feeds'),
     postContainer: document.querySelector('.posts'),
-    modalElements: {
-      modalTitle: document.querySelector('.modal-title'),
-      modalBody: document.querySelector('.modal-body'),
-      modalReadAll: document.querySelector('.full-article'),
-    },
   };
 
   const watchedState = onChange(state.rssFeeds, render(elements, state));
