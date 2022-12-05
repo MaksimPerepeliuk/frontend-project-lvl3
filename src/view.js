@@ -72,7 +72,7 @@ const postsRender = (posts, elements, uiState) => {
 
     const link = document.createElement('a');
     link.href = url;
-    link.classList.add(uiState.readedPosts.includes(id) ? 'fw-normal' : 'fw-bold');
+    link.classList.add(uiState.readedPostsIds.has(id) ? 'fw-normal' : 'fw-bold');
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = title;
@@ -129,8 +129,8 @@ const modalRender = (btnId, rssItems, modalElements) => {
   modalFullArticle.href = url;
 };
 
-const uiStateRender = (value, rssItems) => {
-  const readedPosts = rssItems.posts.filter(({ id }) => value.includes(id));
+const uiStateRender = (readedPostsIds, rssItems) => {
+  const readedPosts = rssItems.posts.filter(({ id }) => readedPostsIds.has(id));
   readedPosts.forEach((post) => {
     const { id } = post;
     const button = document.querySelector(`[data-id="${id}"]`);
@@ -163,7 +163,7 @@ export default (elements, state) => {
         modalRender(value, state.rssItems, elements.modalElements);
         break;
 
-      case 'uiState.readedPosts':
+      case 'uiState.readedPostsIds':
         uiStateRender(value, state.rssItems);
         break;
 

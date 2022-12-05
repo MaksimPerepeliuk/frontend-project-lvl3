@@ -19,7 +19,7 @@ const updateRssItems = (url, watchedState, updateTimeout = 5000) => {
   const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
   return axios
     .get(proxyUrl)
-    .catch(() => { // никогда не отработает из-за особенности ответа от прокси
+    .catch(() => {
       throw new Error('rssForm.errors.networkErr');
     })
     .then((response) => {
@@ -39,7 +39,7 @@ const updateRssItems = (url, watchedState, updateTimeout = 5000) => {
         modalButtons.forEach((button) => {
           button.addEventListener('click', () => {
             const buttonId = button.dataset.id;
-            watchedState.uiState.readedPosts.push(buttonId);
+            watchedState.uiState.readedPostsIds.add(buttonId);
             watchedState.rssItems.modalCurrentPostId = buttonId;
           });
         });
@@ -69,7 +69,7 @@ export default () => {
       modalCurrentPostId: null,
     },
     uiState: {
-      readedPosts: [],
+      readedPostsIds: new Set(),
     },
   };
 
