@@ -18,6 +18,7 @@ i18nextInstance.init({
         },
         rssFeeds: {
           posts: 'Посты',
+          feeds: 'Фиды',
           modalOpenBtn: 'Просмотр',
         },
       },

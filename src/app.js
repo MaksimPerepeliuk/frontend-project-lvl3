@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import 'bootstrap';
 import onChange from 'on-change';
 import axios from 'axios';
 import { uniqueId } from 'lodash';
@@ -14,7 +15,6 @@ const validate = (url, rssUrls) => {
   return schema.validate(url);
 };
 
-// вынести в отдельный файл
 const parseRssItems = (textHtml) => {
   const domParser = new DOMParser();
   const html = domParser.parseFromString(
@@ -92,7 +92,7 @@ const updateRssItems = (url, watchedState, updateTimeout = 5000) => {
 };
 
 export default () => {
-  const state = { // разбить на form, rss, modal (postId)
+  const state = {
     rssForm: {
       state: 'filling',
       error: null,
@@ -104,7 +104,7 @@ export default () => {
       modalCurrentPostId: null,
     },
     uiState: {
-      readedPosts: [], // изменить на Set так как будут дубликаты
+      readedPosts: [],
     },
   };
 
