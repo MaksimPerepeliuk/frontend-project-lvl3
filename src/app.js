@@ -2,8 +2,8 @@ import * as yup from 'yup';
 import 'bootstrap';
 import onChange from 'on-change';
 import axios from 'axios';
-import { uniqueId } from 'lodash';
 import render from './view';
+import parseRssItems from './parser';
 
 const validate = (url, rssUrls) => {
   const schema = yup
@@ -13,41 +13,6 @@ const validate = (url, rssUrls) => {
     .notOneOf(rssUrls, 'rssForm.errors.urlExist');
 
   return schema.validate(url);
-};
-
-const parseRssItems = (textHtml) => {
-  const domParser = new DOMParser();
-  const html = domParser.parseFromString(
-    textHtml,
-    'text/xml',
-  );
-
-  const isParserError = html.querySelector('parsererror');
-  if (isParserError) {
-    throw new Error('rssForm.errors.rssNotValid');
-  }
-
-  const channel = html.querySelector('channel');
-  const title = channel.querySelector('title').textContent;
-  const description = channel.querySelector('description').textContent;
-  const id = uniqueId();
-
-  const items = channel.querySelectorAll('item');
-  const posts = Array.from(items).map((item) => {
-    const itemTitle = item.querySelector('title').textContent;
-    const itemDescription = item.querySelector('description').textContent;
-    const url = item.querySelector('link').textContent;
-    const postId = uniqueId();
-    return {
-      id: postId,
-      feedId: id,
-      title: itemTitle,
-      description: itemDescription,
-      url,
-    };
-  });
-
-  return [{ id, title, description }, posts];
 };
 
 const updateRssItems = (url, watchedState, updateTimeout = 5000) => {
