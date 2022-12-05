@@ -14,96 +14,97 @@ const validate = (url, rssUrls) => {
   return schema.validate(url);
 };
 
-const parseRssItems = (html) => {
-  const channels = html.querySelectorAll('channel');
-  const feeds = [];
-  const posts = [];
-  channels.forEach((channel) => {
-    const title = channel.querySelector('title').textContent;
-    const description = channel.querySelector('description').textContent;
-    const feedId = uniqueId();
-    feeds.push({ id: feedId, title, description });
-    const items = channel.querySelectorAll('item');
-    items.forEach((item) => {
-      const itemTitle = item.querySelector('title').textContent;
-      const itemDescription = item.querySelector('description').textContent;
-      const url = item.querySelector('link').textContent;
-      const postId = uniqueId();
-      const postData = {
-        id: postId,
-        feedId,
-        title: itemTitle,
-        description: itemDescription,
-        url,
-      };
-      posts.push(postData);
-    });
+// вынести в отдельный файл
+const parseRssItems = (textHtml) => {
+  const domParser = new DOMParser();
+  const html = domParser.parseFromString(
+    textHtml,
+    'text/xml',
+  );
+
+  const isParserError = html.querySelector('parsererror');
+  if (isParserError) {
+    throw new Error('rssForm.errors.rssNotValid');
+  }
+
+  const channel = html.querySelector('channel');
+  const title = channel.querySelector('title').textContent;
+  const description = channel.querySelector('description').textContent;
+  const id = uniqueId();
+
+  const items = channel.querySelectorAll('item');
+  const posts = Array.from(items).map((item) => {
+    const itemTitle = item.querySelector('title').textContent;
+    const itemDescription = item.querySelector('description').textContent;
+    const url = item.querySelector('link').textContent;
+    const postId = uniqueId();
+    return {
+      id: postId,
+      feedId: id,
+      title: itemTitle,
+      description: itemDescription,
+      url,
+    };
   });
 
-  return { feeds, posts };
+  return [{ id, title, description }, posts];
 };
 
-const updateRssItems = (url, watchedState, interval = 5000) => {
+const updateRssItems = (url, watchedState, updateTimeout = 5000) => {
   const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
   return axios
     .get(proxyUrl)
-    .catch(() => {
+    .catch(() => { // никогда не отработает из-за особенности ответа от прокси
       throw new Error('rssForm.errors.networkErr');
     })
     .then((response) => {
-      const domParser = new DOMParser();
-      const htmlDocument = domParser.parseFromString(
-        response.data.contents,
-        'text/xml',
-      );
-      const isParserError = htmlDocument.querySelector('parsererror');
-      if (isParserError) {
-        throw new Error('rssForm.errors.rssNotValid');
-      }
-      const rssItems = parseRssItems(htmlDocument);
-      const feedTitles = watchedState.data.feeds.map(({ title }) => title);
-      const postTitles = watchedState.data.posts.map(({ title }) => title);
-      const newFeeds = rssItems.feeds.filter(
-        ({ title }) => !feedTitles.includes(title),
-      );
-      const newPosts = rssItems.posts.filter(
-        ({ title }) => !postTitles.includes(title),
-      );
+      const [feed, posts] = parseRssItems(response.data.contents);
+
+      const feedTitles = watchedState.rssItems.feeds.map(({ title }) => title);
+      const postTitles = watchedState.rssItems.posts.map(({ title }) => title);
+
+      const newFeed = feedTitles.includes(feed.title) ? null : feed;
+      const newPosts = posts.filter(({ title }) => !postTitles.includes(title));
+
       if (newPosts.length > 0) {
-        watchedState.data.feeds = [...newFeeds, ...watchedState.data.feeds];
-        watchedState.data.posts = [...newPosts, ...watchedState.data.posts];
+        watchedState.rssItems.feeds = [newFeed, ...watchedState.rssItems.feeds];
+        watchedState.rssItems.posts = [...newPosts, ...watchedState.rssItems.posts];
+
         const modalButtons = document.querySelectorAll('[data-bs-target="#modal"]');
         modalButtons.forEach((button) => {
           button.addEventListener('click', () => {
-            watchedState.uiState.readedPosts.push(button.dataset.id);
+            const buttonId = button.dataset.id;
+            watchedState.uiState.readedPosts.push(buttonId);
+            watchedState.rssItems.modalCurrentPostId = buttonId;
           });
         });
       }
-      setTimeout(() => updateRssItems(url, watchedState, interval), interval);
+      setTimeout(() => updateRssItems(url, watchedState, updateTimeout), updateTimeout);
     })
     .catch((err) => {
-      if (!watchedState.urls.includes(url)) {
-        watchedState.state = 'failed';
-        watchedState.error = err.message;
+      if (!watchedState.rssForm.urls.includes(url)) {
+        watchedState.rssForm.state = 'failed';
+        watchedState.rssForm.error = err.message;
         throw err;
       }
-      setTimeout(() => updateRssItems(url, watchedState, interval), interval);
+      setTimeout(() => updateRssItems(url, watchedState, updateTimeout), updateTimeout);
     });
 };
 
 export default () => {
-  const state = {
-    rssFeeds: {
+  const state = { // разбить на form, rss, modal (postId)
+    rssForm: {
       state: 'filling',
       error: null,
       urls: [],
-      data: {
-        feeds: [],
-        posts: [],
-      },
-      uiState: {
-        readedPosts: [],
-      },
+    },
+    rssItems: {
+      feeds: [],
+      posts: [],
+      modalCurrentPostId: null,
+    },
+    uiState: {
+      readedPosts: [], // изменить на Set так как будут дубликаты
     },
   };
 
@@ -114,31 +115,35 @@ export default () => {
     feedback: document.querySelector('.feedback'),
     feedContainer: document.querySelector('.feeds'),
     postContainer: document.querySelector('.posts'),
+    modalElements: {
+      modalTitle: document.querySelector('.modal-title'),
+      modalBody: document.querySelector('.modal-body'),
+      modalFullArticle: document.querySelector('.full-article'),
+    },
   };
 
-  const watchedState = onChange(state.rssFeeds, render(elements, state));
+  const watchedState = onChange(state, render(elements, state));
 
   elements.form.addEventListener('submit', (event) => {
     event.preventDefault();
-
     const formData = new FormData(event.target);
     const url = formData.get('url');
-    validate(url, state.rssFeeds.urls)
+    validate(url, state.rssForm.urls)
       .then(() => {
-        watchedState.state = 'processing';
+        watchedState.rssForm.state = 'processing';
       })
       .catch((err) => {
-        watchedState.state = 'failed';
+        watchedState.rssForm.state = 'failed';
         throw new Error(err.message);
       })
       .then(() => updateRssItems(url, watchedState))
       .then(() => {
-        watchedState.urls.push(url);
-        watchedState.state = 'finished';
+        watchedState.rssForm.urls.push(url);
+        watchedState.rssForm.state = 'finished';
       })
       .catch((err) => {
-        watchedState.state = 'failed';
-        watchedState.error = err.message;
+        watchedState.rssForm.state = 'failed';
+        watchedState.rssForm.error = err.message;
       });
   });
 };
